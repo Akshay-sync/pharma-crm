@@ -26,7 +26,20 @@ def get_hcps(db: Session = Depends(get_db)):
 
 @app.post("/interactions", response_model=InteractionResponse)
 def create_interaction(interaction: InteractionCreate, db: Session = Depends(get_db)):
-    db_interaction = Interaction(**interaction.model_dump())
+    from datetime import date, time as dt_time
+    data = interaction.model_dump()
+    hcp_name = data.pop('hcp_name', None)
+    if hcp_name:
+        hcp = db.query(HCP).filter(HCP.name.ilike(f"%{hcp_name}%")).first()
+        if hcp:
+            data['hcp_id'] = hcp.id
+        else:
+            data['hcp_id'] = 1
+    if not data.get('date'):
+        data['date'] = date.today()
+    if not data.get('time'):
+        data['time'] = dt_time(12, 0)
+    db_interaction = Interaction(**data)
     db.add(db_interaction)
     db.commit()
     db.refresh(db_interaction)

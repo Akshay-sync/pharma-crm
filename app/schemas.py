@@ -27,8 +27,19 @@ class InteractionBase(BaseModel):
     outcomes: Optional[str] = None
     followup_actions: Optional[str] = None
 
-class InteractionCreate(InteractionBase):
-    pass
+class InteractionCreate(BaseModel):
+    hcp_name: Optional[str] = None
+    hcp_id: Optional[int] = None
+    date: Optional[date] = None
+    time: Optional[time] = None
+    interaction_type: Optional[str] = None
+    attendees: Optional[str] = None
+    topics_discussed: Optional[str] = None
+    materials_shared: Optional[str] = None
+    samples_distributed: Optional[str] = None
+    sentiment: Optional[str] = None
+    outcomes: Optional[str] = None
+    followup_actions: Optional[str] = None
 
 class InteractionUpdate(BaseModel):
     interaction_type: Optional[str] = None
