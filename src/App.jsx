@@ -41,6 +41,7 @@ const followup = extract('Follow-up Actions')
 const interactionType = extract('Interaction Type')
 
 if (hcp && hcp.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, hcp_name: hcp }))
+setForm(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }))
 if (topics && topics.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, topics_discussed: topics }))
 if (outcomes && outcomes.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, outcomes: outcomes }))
 const materialsShared = extract('Materials Shared')
@@ -59,9 +60,20 @@ else if (sentiment.toLowerCase().includes('neutral')) setForm(prev => ({ ...prev
     setChatInput('')
   }
 
-  const handleLog = async () => {
+ const handleLog = async () => {
+  try {
+    await axios.post(`${API_URL}/interactions`, {
+      hcp_name: form.hcp_name,
+      topics_discussed: form.topics_discussed,
+      sentiment: form.sentiment,
+      outcomes: form.outcomes,
+      followup_actions: form.followup_actions
+    })
     alert('Interaction logged successfully!')
+  } catch (err) {
+    alert('Error logging interaction.')
   }
+}
 
   return (
     <div className="app-container">
@@ -140,7 +152,7 @@ else if (sentiment.toLowerCase().includes('neutral')) setForm(prev => ({ ...prev
             <label>Follow-up Actions</label>
             <textarea value={form.followup_actions} onChange={e => setForm({...form, followup_actions: e.target.value})} placeholder="Enter next steps or tasks..." />
           </div>
-
+            <button onClick={handleLog} className="log-btn" style={{marginTop: '16px', width: '100%'}}>Save Interaction</button>
           
         </div>
 
