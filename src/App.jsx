@@ -26,31 +26,51 @@ function App() {
       setMessages(prev => [...prev, { role: 'ai', text: reply }])
       
       // Extract all fields from AI response
+const fieldLabels = [
+  'HCP Name', 'Date', 'Interaction Type', 'Topics Discussed',
+  'Materials Shared', 'Sentiment', 'Outcomes',
+  'Follow-up Actions', 'Followup Actions'
+]
+const boundary = fieldLabels.map(f => f.replace(/\s+/g, '\\s+')).join('|')
+
 const extract = (label) => {
-  const regex = new RegExp(label + '[:\\s]+([^\\n|]+)', 'i')
+  const regex = new RegExp(
+    label + '[:\\s]+([\\s\\S]*?)(?=(?:' + boundary + ')\\s*:|$)', 'i'
+  )
   const match = reply.match(regex)
-  return match ? match[1].trim() : ''
+  const val = match ? match[1].trim() : ''
+  return ['not specified', 'not mentioned', ''].includes(val.toLowerCase())
+    ? '' : val
 }
 
-const hcp = extract('HCP Name')
-const topics = extract('Topics Discussed')
-const sentiment = extract('Sentiment')
-const materials = extract('(?:Materials Shared|Follow-up Actions|Followup Actions)')
-const outcomes = extract('Outcomes')
-const followup = extract('Follow-up Actions')
+const hcp             = extract('HCP Name')
 const interactionType = extract('Interaction Type')
-
-if (hcp && hcp.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, hcp_name: hcp }))
-setForm(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }))
-if (topics && topics.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, topics_discussed: topics }))
-if (outcomes && outcomes.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, outcomes: outcomes }))
+const topics          = extract('Topics Discussed')
 const materialsShared = extract('Materials Shared')
-if (materialsShared && materialsShared.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, materials_shared: materialsShared }))
-if (followup && followup.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, followup_actions: followup }))
-if (interactionType && interactionType.toLowerCase() !== 'not mentioned') setForm(prev => ({ ...prev, interaction_type: interactionType }))
-if (sentiment.toLowerCase().includes('positive')) setForm(prev => ({ ...prev, sentiment: 'Positive' }))
-else if (sentiment.toLowerCase().includes('negative')) setForm(prev => ({ ...prev, sentiment: 'Negative' }))
-else if (sentiment.toLowerCase().includes('neutral')) setForm(prev => ({ ...prev, sentiment: 'Neutral' }))
+const sentiment       = extract('Sentiment')
+const outcomes        = extract('Outcomes')
+const followup        = extract('Follow-up Actions')
+
+const isExtractionResponse = reply.toLowerCase().includes('hcp name:') 
+  && !reply.toLowerCase().includes('summarize')
+  && !reply.toLowerCase().includes('summary')
+  && !reply.toLowerCase().includes('suggest')
+
+if (isExtractionResponse) {
+setForm(prev => ({
+  ...prev,
+  date: new Date().toISOString().split('T')[0],
+  ...(hcp             && { hcp_name: hcp }),
+  ...(interactionType && { interaction_type: interactionType }),
+  ...(topics          && { topics_discussed: topics }),
+  ...(materialsShared && { materials_shared: materialsShared }),
+  ...(outcomes        && { outcomes: outcomes }),
+  ...(followup        && { followup_actions: followup }),
+  ...(sentiment.toLowerCase().includes('positive') && { sentiment: 'Positive' }),
+  ...(sentiment.toLowerCase().includes('negative') && { sentiment: 'Negative' }),
+  ...(sentiment.toLowerCase().includes('neutral')  && { sentiment: 'Neutral'  }),
+}))
+}
       
       setAiSuggestions(reply)
     } catch (err) {
