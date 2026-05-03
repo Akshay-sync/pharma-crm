@@ -65,17 +65,22 @@ def get_interactions(hcp_id: int, db: Session = Depends(get_db)):
 def chat_with_agent(request: ChatRequest):
     try:
         from app.agent import llm, summarize_interaction, suggest_followup, get_hcp_details
-        
+        import re
         message = request.message.lower()
-        
         if "suggest" in message or "follow" in message:
             name = "Dr. Smith"
+            match = re.search(r'dr\.?\s+\w+', request.message, re.IGNORECASE)
+            if match:
+                name = match.group()
             result = suggest_followup.invoke({"hcp_name": name})
-        elif "details" in message or "profile" in message:
-            result = get_hcp_details.invoke({"hcp_name": "Dr. Smith"})
+        elif "details" in message or "profile" in message or "show me" in message:
+            name = "Dr. Smith"
+            match = re.search(r'dr\.?\s+\w+', request.message, re.IGNORECASE)
+            if match:
+                name = match.group()
+            result = get_hcp_details.invoke({"hcp_name": name})
         else:
             result = summarize_interaction.invoke({"free_text": request.message})
-        
         return {"response": str(result)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -41,10 +41,11 @@ def log_interaction(hcp_name: str, topics_discussed: str, sentiment: str, outcom
         return f"Error logging: {str(e)}"
 
 @tool
-def edit_interaction(interaction_id: int, field_name: str, new_value: str) -> str:
+def edit_interaction(interaction_id: str, field_name: str, new_value: str) -> str:    
     """Edits a specific field of an existing interaction."""
     try:
         db = SessionLocal()
+        interaction_id = int(interaction_id)
         interaction = db.query(Interaction).filter(Interaction.id == interaction_id).first()
         if not interaction:
             return "Interaction not found."
@@ -91,7 +92,7 @@ def suggest_followup(hcp_name: str) -> str:
 def summarize_interaction(free_text: str) -> str:
     """Extracts structured interaction details from free-text notes."""
     try:
-        prompt = f"""Extract these fields from the text and return as plain text:
+        prompt = f"""Extract these fields from the text and return as plain text with exact labels:
 - HCP Name
 - Date  
 - Interaction Type
